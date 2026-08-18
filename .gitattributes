@@ -1,0 +1,9 @@
+* text=auto
+
+*.bat text eol=crlf
+*.pl text eol=lf
+
+# The payload must reach omni.ja byte for byte. manifest.json pins the SHA-256
+# of every file, so any end-of-line conversion on checkout would break
+# verification and the patcher would refuse to run.
+payload/** -text

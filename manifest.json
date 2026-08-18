@@ -1,0 +1,34 @@
+{
+    "name":  "parallel-pop3",
+    "description":  "Per-destination POP3 download lock, enabled by -parallel-pop3 (bug 1943854)",
+    "targetVersion":  "153.0.3",
+    "sourceTree":  "comm-central 156.0a1 @ 48d14750199",
+    "pref":  "mail.pop3.parallel_accounts",
+    "flag":  "-parallel-pop3",
+    "entries":  [
+                    {
+                        "entry":  "modules/Pop3IncomingServer.sys.mjs",
+                        "file":  "Pop3IncomingServer.sys.mjs",
+                        "origSha":  "258D69C50CF5BBE74689FADCD0D7362761F09227E077052D38F5C1A199A7A2F1",
+                        "newSha":  "220D5246E35C8D9D2F2E06502B7B72ACE1E239B8893A8DC948359D3E32BE3456"
+                    },
+                    {
+                        "entry":  "modules/Pop3Service.sys.mjs",
+                        "file":  "Pop3Service.sys.mjs",
+                        "origSha":  "739F755C2B4D2F4D36ECC83A608A47DF576C3DC52BBFC4A48D923AAA99A06BEC",
+                        "newSha":  "BBC6FD3B749EE0D648091F00A79BC39F536765675D685A78858856CEFEDA3AD6"
+                    },
+                    {
+                        "entry":  "modules/Pop3Channel.sys.mjs",
+                        "file":  "Pop3Channel.sys.mjs",
+                        "origSha":  "1821C8B710CF809398F8F91460A2BD752585E01CD16FB6E3E631D90669824C5B",
+                        "newSha":  "D468E8189C5393DC17F73C563B19672A4F68AD38B69D9F9E9C54148F81CDD8D9"
+                    },
+                    {
+                        "entry":  "modules/MailGlue.sys.mjs",
+                        "file":  "MailGlue.sys.mjs",
+                        "origSha":  "F31BD89F85129BEDFB35C49595C87D8F7166903D9128EC1B79155336CBFE4FFE",
+                        "newSha":  "7FB6A49E25B0A996FC90BB689C7C69ECD9A8B68E4EA65CE40CCC438FBD1554AC"
+                    }
+                ]
+}

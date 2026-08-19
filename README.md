@@ -4,7 +4,7 @@ Makes Thunderbird check POP3 accounts concurrently instead of one after
 another. Accounts that download into the same folder — a global inbox, or
 several accounts deferred to the same account — still run one at a time.
 
-Built for **Thunderbird 153.0.3**. Off by default.
+Built for **Thunderbird 154.0**. Off by default.
 
 ## Why
 
@@ -238,11 +238,13 @@ The payload is pinned to one build. To retarget it:
 
 1. Extract the four modules from the new installation's `omni.ja` into
    `payload/*.orig`.
-2. Diff each against the same file in a comm-central checkout. Two of them —
-   `Pop3IncomingServer.sys.mjs` and `Pop3Service.sys.mjs` — were byte-identical
-   between 153.0.3 and 156.0a1, so the patched versions drop straight in.
-   `Pop3Channel.sys.mjs` and `MailGlue.sys.mjs` had diverged and were adapted
-   by hand from the installed files.
+2. Diff each against the same file in a comm-central checkout. Where a module
+   is byte-identical to the tree, the patched working copy drops straight in.
+   Where it has diverged, apply the change by hand to the installed file
+   instead. Which modules fall in which group changes from release to release,
+   so check every time: going 153.0.3 to 154.0, `Pop3Channel.sys.mjs` caught up
+   with the tree and became a straight copy, while `MailGlue.sys.mjs` stayed
+   behind and still needed grafting.
 3. Apply the changes to produce `payload/*.new`.
 4. Regenerate `manifest.json` with fresh SHA-256 values and the new
    `targetVersion`.
@@ -263,7 +265,8 @@ checkout would break the SHA-256 verification.
 ## Provenance
 
 Built from comm-central `156.0a1` at `48d14750199`, targeting Thunderbird
-`153.0.3` (build `20260810194242`).
+`154.0` (build `20260818021538`). Earlier revisions targeted 153.0.3; that
+payload is in the git history.
 
 The POP3 client stack is identical between the two — `Pop3Client.sys.mjs` is
 byte-for-byte the same, including the watchdog timer from

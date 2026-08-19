@@ -1,14 +1,13 @@
 #!/usr/bin/env perl
 #
-# Patch a Thunderbird installation to support parallel POP3 account checking.
+# Patch a Thunderbird installation to check POP3 accounts in parallel.
 #
-# Replaces four JavaScript modules inside omni.ja. Every entry is verified by
+# Replaces three JavaScript modules inside omni.ja. Every entry is verified by
 # SHA-256 against the exact bytes the patch was built from, so the script
 # refuses to touch an installation it does not recognise. The original omni.ja
 # is backed up first.
 #
-# Once patched, start Thunderbird with -parallel-pop3 to enable the feature, or
-# set mail.pop3.parallel_accounts to true in the Config Editor.
+# Once patched the behaviour is unconditional; there is nothing to switch on.
 #
 #   perl patch-parallel-pop3.pl --install DIR [--profile DIR] [options]
 #
@@ -150,7 +149,10 @@ if ($version ne $manifest->{targetVersion}) {
 
 # ------------------------------------------------------------------ verify --
 
-step 'Verifying the four modules inside omni.ja';
+step sprintf(
+    'Verifying the %d modules inside omni.ja',
+    scalar @{ $manifest->{entries} }
+);
 
 my $zip = Archive::Zip->new;
 fail "cannot read '$omni' as a zip archive." unless $zip->read($omni) == Archive::Zip::AZ_OK();
@@ -229,7 +231,7 @@ for my $e (@{ $manifest->{entries} }) {
     fail "$e->{entry} did not come out as expected. Roll back with --restore."
         if $have ne uc $e->{newSha};
 }
-ok 'all four modules match the expected hashes';
+ok 'every module matches the expected hash';
 
 # ------------------------------------------------------------------- cache --
 
@@ -244,14 +246,14 @@ if ($^O eq 'darwin') {
 }
 
 my $exe = $^O eq 'MSWin32' ? File::Spec->catfile($resources, 'thunderbird.exe') : 'thunderbird';
-print "\nDone. Start Thunderbird once with -purgecaches:\n";
+print "\nDone. Parallel POP3 checking is active, there is nothing to switch on.\n";
+print "Start Thunderbird once with -purgecaches:\n";
 if ($opt{profile}) {
-    print qq{  "$exe" -no-remote -profile "$opt{profile}" -parallel-pop3 -purgecaches\n};
+    print qq{  "$exe" -no-remote -profile "$opt{profile}" -purgecaches\n};
 } else {
-    print qq{  "$exe" -parallel-pop3 -purgecaches\n};
+    print qq{  "$exe" -purgecaches\n};
 }
-print "Afterwards -purgecaches is no longer needed, just -parallel-pop3.\n";
-print "Check it took: mail.pop3.parallel_accounts is true in the Config Editor.\n";
+print "Afterwards start it normally.\n";
 print "Roll back with: --restore\n\n";
 
 # --------------------------------------------------------------- utilities --

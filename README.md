@@ -4,7 +4,7 @@ Makes Thunderbird check POP3 accounts concurrently instead of one after
 another. Accounts that download into the same folder — a global inbox, or
 several accounts deferred to the same account — still run one at a time.
 
-Built for **Thunderbird 154.0**. Off by default.
+Built for **Thunderbird 154.0**.
 
 ## Why
 
@@ -34,29 +34,13 @@ This patch replaces the single global lock with:
 Locks are a promise chain, taken in sorted key order, so ordering is total and
 deadlock is impossible.
 
+The change is unconditional. There is no pref and no command-line switch —
+patch an installation and parallel checking is simply how it behaves.
+
 [b1847137]: https://bugzilla.mozilla.org/show_bug.cgi?id=1847137
 [b1943854]: https://bugzilla.mozilla.org/show_bug.cgi?id=1943854
 [b707933]: https://bugzilla.mozilla.org/show_bug.cgi?id=707933
 [b2020627]: https://bugzilla.mozilla.org/show_bug.cgi?id=2020627
-
-## Enabling it
-
-Nothing changes until you ask for it. Per launch:
-
-```
-thunderbird -parallel-pop3
-```
-
-The flag is consumed at `command-line-startup` and sets the pref on the
-default branch, so it lasts for that session only and never reaches
-`prefs.js`. To turn it on permanently, set this in the Config Editor instead:
-
-```
-mail.pop3.parallel_accounts = true
-```
-
-A user-set value of that pref overrides the flag, so do not set it to `false`
-by hand if you plan to use `-parallel-pop3`.
 
 ## Installing
 
@@ -129,7 +113,6 @@ involved, which is why this can be applied to an official build.
 modules/Pop3IncomingServer.sys.mjs   the lock itself
 modules/Pop3Service.sys.mjs          passes the destination folder in
 modules/Pop3Channel.sys.mjs          same, for single-message body fetches
-modules/MailGlue.sys.mjs             the -parallel-pop3 flag
 ```
 
 Nothing else in the installation is modified. `omni.ja` is copied to
@@ -145,7 +128,7 @@ A version check alone would be useless here — the source tree is always
 Nightly and any release is older, so it would fail every time. It is kept only
 as a first, informational gate, and `--force` skips it.
 
-The real check is per file. Each of the four entries is compared by SHA-256
+The real check is per file. Each of the three entries is compared by SHA-256
 against the exact bytes the patch was built from, recorded in
 `manifest.json`. Three outcomes:
 
@@ -155,7 +138,7 @@ against the exact bytes the patch was built from, recorded in
 | `newSha` | Already patched, left alone |
 | Neither | Abort before anything is written |
 
-`--force` never relaxes this. Verification of all four entries completes
+`--force` never relaxes this. Verification of all three entries completes
 before the backup is taken, so an abort leaves the installation untouched.
 After writing, every entry is re-read and re-hashed.
 
@@ -184,7 +167,6 @@ Not affected:
   no POP3 account downloads directly into it. There the semaphore is taken and
   released inside a single synchronous call, so there is no window to collide
   in.
-- Everything, if you leave `mail.pop3.parallel_accounts` off.
 
 Why it happens: `nsPop3Sink` acquires the download destination's semaphore and
 holds it for the whole session, while a filter needs that same semaphore on
@@ -227,7 +209,7 @@ The archive stays valid; only the preload optimisation is lost.
 patch-parallel-pop3.pl             the patcher
 patch-parallel-pop3.bat            Windows, with confirmation
 patch-parallel-pop3-dry-run.bat    Windows, verify only
-manifest.json                      expected and patched SHA-256 for all four entries
+manifest.json                      expected and patched SHA-256 for every entry
 payload/*.orig                     stock modules this was built against
 payload/*.new                      patched modules
 ```
@@ -236,15 +218,15 @@ payload/*.new                      patched modules
 
 The payload is pinned to one build. To retarget it:
 
-1. Extract the four modules from the new installation's `omni.ja` into
+1. Extract the three modules from the new installation's `omni.ja` into
    `payload/*.orig`.
 2. Diff each against the same file in a comm-central checkout. Where a module
    is byte-identical to the tree, the patched working copy drops straight in.
    Where it has diverged, apply the change by hand to the installed file
    instead. Which modules fall in which group changes from release to release,
-   so check every time: going 153.0.3 to 154.0, `Pop3Channel.sys.mjs` caught up
-   with the tree and became a straight copy, while `MailGlue.sys.mjs` stayed
-   behind and still needed grafting.
+   so check every time — in 153.0.3 `Pop3Channel.sys.mjs` lagged the tree and
+   had to be grafted by hand, while by 154.0 it had caught up and became a
+   straight copy.
 3. Apply the changes to produce `payload/*.new`.
 4. Regenerate `manifest.json` with fresh SHA-256 values and the new
    `targetVersion`.
@@ -275,7 +257,7 @@ bug is worth knowing about: it held the same global lock forever, and its
 existence is part of why serial checking looked worse than it was.
 
 Verified against the source tree with the full `mailnews/local` and
-`mailnews/base` xpcshell suites — 137 passing, plus a new
-`test_pop3ParallelDownload.js` covering three cases: distinct destinations run
-concurrently, a shared inbox stays serialised, and the pref off serialises
-everything.
+`mailnews/base` xpcshell suites — 137 passing, including a new
+`test_pop3ParallelDownload.js` covering both halves of the design: accounts
+with distinct destinations run concurrently, accounts sharing an inbox stay
+serialised.

@@ -4,19 +4,11 @@
 
 import { MsgIncomingServer } from "resource:///modules/MsgIncomingServer.sys.mjs";
 import { MailServices } from "resource:///modules/MailServices.sys.mjs";
-import { XPCOMUtils } from "resource://gre/modules/XPCOMUtils.sys.mjs";
 
 const lazy = {};
 ChromeUtils.defineESModuleGetters(lazy, {
   Pop3Client: "resource:///modules/Pop3Client.sys.mjs",
 });
-
-XPCOMUtils.defineLazyPreferenceGetter(
-  lazy,
-  "parallelAccounts",
-  "mail.pop3.parallel_accounts",
-  false
-);
 
 /**
  * @implements {nsIPop3IncomingServer}
@@ -325,9 +317,6 @@ export class Pop3IncomingServer extends MsgIncomingServer {
    * @returns {string[]}
    */
   _getDownloadLockKeys(destFolder) {
-    if (!lazy.parallelAccounts) {
-      return ["*"];
-    }
     const serverKey = `server:${this.key}`;
     let destKey = destFolder?.URI;
     if (!destKey) {

@@ -212,7 +212,29 @@ patch-parallel-pop3-dry-run.bat    Windows, verify only
 manifest.json                      expected and patched SHA-256 for every entry
 payload/*.orig                     stock modules this was built against
 payload/*.new                      patched modules
+test/                              xpcshell test, for a comm-central checkout
 ```
+
+## Running the test
+
+`test/test_pop3ParallelDownload.js` is an xpcshell test and needs a built
+comm-central checkout — it cannot run against an installed Thunderbird. Copy it
+in and register it:
+
+```bash
+cp test/test_pop3ParallelDownload.js comm/mailnews/local/test/unit/
+# add a ["test_pop3ParallelDownload.js"] entry to
+# comm/mailnews/local/test/unit/xpcshell.toml, then
+./mach build-backend && ./mach build install-tests
+./mach xpcshell-test comm/mailnews/local/test/unit/test_pop3ParallelDownload.js
+```
+
+It covers both halves of the design. Two accounts with distinct inboxes must
+overlap; two accounts deferred to the same inbox must not. The assertion is not
+timing based: the fake server handlers are synchronous, so the "slow" account
+parks inside its STAT handler and spins the event loop until it either sees its
+peer finish a whole session (distinct destinations) or times out having seen
+nothing (shared destination).
 
 ## Rebuilding for another Thunderbird version
 
@@ -236,9 +258,10 @@ The payload is pinned to one build. To retarget it:
 [MPL-2.0](LICENSE).
 
 `payload/*.orig` and `payload/*.new` are Mozilla source files, modified in the
-case of `*.new`. MPL 2.0 is per-file copyleft, so those stay under it and keep
-their original license headers. The patcher and the batch files are offered
-under the same license for simplicity.
+case of `*.new`, and `test/` is written against Mozilla's test harness. MPL 2.0
+is per-file copyleft, so those stay under it and keep their original license
+headers. The patcher and the batch files are offered under the same license for
+simplicity.
 
 Note for contributors: `.gitattributes` marks `payload/**` as binary. Those
 files must reach `omni.ja` byte for byte, and an end-of-line conversion on
@@ -257,7 +280,5 @@ bug is worth knowing about: it held the same global lock forever, and its
 existence is part of why serial checking looked worse than it was.
 
 Verified against the source tree with the full `mailnews/local` and
-`mailnews/base` xpcshell suites — 137 passing, including a new
-`test_pop3ParallelDownload.js` covering both halves of the design: accounts
-with distinct destinations run concurrently, accounts sharing an inbox stay
-serialised.
+`mailnews/base` xpcshell suites — 137 passing, including the test shipped in
+`test/` here.

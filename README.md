@@ -4,7 +4,7 @@ Makes Thunderbird check POP3 accounts concurrently instead of one after
 another. Accounts that download into the same folder — a global inbox, or
 several accounts deferred to the same account — still run one at a time.
 
-Built for **Thunderbird 154.0**.
+Built for **Thunderbird 154.0 and 155.0**.
 
 ## Why
 
@@ -125,8 +125,10 @@ diff them against `payload/*.new` and see exactly what changed.
 ## Safety model
 
 A version check alone would be useless here — the source tree is always
-Nightly and any release is older, so it would fail every time. It is kept only
-as a first, informational gate, and `--force` skips it.
+Nightly and any release is older, so comparing against it would fail every
+time. What `manifest.json` carries instead is `targetVersions`, the list of
+releases the payload is known to apply to. It is only a first, informational
+gate, and `--force` skips it.
 
 The real check is per file. Each of the three entries is compared by SHA-256
 against the exact bytes the patch was built from, recorded in
@@ -236,22 +238,32 @@ parks inside its STAT handler and spins the event loop until it either sees its
 peer finish a whole session (distinct destinations) or times out having seen
 nothing (shared destination).
 
-## Rebuilding for another Thunderbird version
+## Supporting another Thunderbird version
 
-The payload is pinned to one build. To retarget it:
+Start by extracting the three modules from the new installation's `omni.ja` and
+comparing them with `payload/*.orig`.
 
-1. Extract the three modules from the new installation's `omni.ja` into
-   `payload/*.orig`.
-2. Diff each against the same file in a comm-central checkout. Where a module
-   is byte-identical to the tree, the patched working copy drops straight in.
-   Where it has diverged, apply the change by hand to the installed file
-   instead. Which modules fall in which group changes from release to release,
-   so check every time — in 153.0.3 `Pop3Channel.sys.mjs` lagged the tree and
-   had to be grafted by hand, while by 154.0 it had caught up and became a
-   straight copy.
+**If they are byte-identical**, the release changed nothing this patch touches.
+Add its version string to `targetVersions` in `manifest.json` and you are done —
+the payload itself does not need rebuilding. That was the case for 155.0, where
+all three modules were unchanged from 154.0.
+
+**If a module has changed**, the payload has to be rebuilt for that release:
+
+1. Put the new stock files in `payload/*.orig`.
+2. Diff each against the same file in a comm-central checkout. Where a module is
+   byte-identical to the tree, the patched working copy drops straight in. Where
+   it has diverged, apply the change by hand to the installed file instead.
+   Which modules fall in which group changes from release to release, so check
+   every time — in 153.0.3 `Pop3Channel.sys.mjs` lagged the tree and had to be
+   grafted by hand, while by 154.0 it had caught up and became a straight copy.
 3. Apply the changes to produce `payload/*.new`.
-4. Regenerate `manifest.json` with fresh SHA-256 values and the new
-   `targetVersion`.
+4. Regenerate `manifest.json` with fresh SHA-256 values and the new version in
+   `targetVersions`.
+
+Either way, finish with `--dry-run` against the real installation. A payload
+that does not match aborts before writing anything, so a mistake here is loud
+rather than silent.
 
 ## License
 
@@ -270,13 +282,16 @@ checkout would break the SHA-256 verification.
 ## Provenance
 
 Built from comm-central `156.0a1` at `48d14750199`, targeting Thunderbird
-`154.0` (build `20260818021538`). Earlier revisions targeted 153.0.3; that
-payload is in the git history.
+`154.0` (build `20260818021538`) and `155.0` (build `20260828141248`). All
+three patched modules are byte-identical across those two releases, so one
+payload serves both. Earlier revisions targeted 153.0.3; that payload is in the
+git history.
 
-The POP3 client stack is identical between the two — `Pop3Client.sys.mjs` is
-byte-for-byte the same, including the watchdog timer from
-[bug 2020627][b2020627] that fixed POP3 deadlocking on silent servers. That
-bug is worth knowing about: it held the same global lock forever, and its
+`Pop3Client.sys.mjs` is byte-for-byte the same in the tree and in both
+releases, including the watchdog timer from [bug 2020627][b2020627] that fixed
+POP3 deadlocking on silent servers. The lock depends on that file's `onFree`
+hook, so it is worth re-checking on every retarget. That bug is also worth
+knowing about on its own: it held the old global lock forever, and its
 existence is part of why serial checking looked worse than it was.
 
 Verified against the source tree with the full `mailnews/local` and

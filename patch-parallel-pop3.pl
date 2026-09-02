@@ -117,7 +117,14 @@ fail "'$manifest_path' not found. Is --payload correct?" unless -f $manifest_pat
 my $manifest_json = slurp($manifest_path);
 $manifest_json =~ s/^\x{ef}\x{bb}\x{bf}//;    # tolerate a UTF-8 BOM
 my $manifest = decode_json($manifest_json);
-ok "Payload:   $manifest->{name}, built for $manifest->{targetVersion}";
+# targetVersions lists every release the payload is known to apply to. Releases
+# that leave the patched modules untouched can simply be added to it.
+my @targets = @{ $manifest->{targetVersions} || [] };
+push @targets, $manifest->{targetVersion} if $manifest->{targetVersion};
+fail "'$manifest_path' names no target version." unless @targets;
+my $targets_text = join ', ', @targets;
+
+ok "Payload:   $manifest->{name}, built for $targets_text";
 note "from $manifest->{sourceTree}";
 
 my $backup = File::Spec->catfile($resources, "omni.ja.bak-$version-$build_id");
@@ -138,12 +145,12 @@ if ($opt{restore}) {
     exit 0;
 }
 
-if ($version ne $manifest->{targetVersion}) {
+unless (grep { $_ eq $version } @targets) {
     if ($opt{force}) {
-        warn_ "version mismatch: installed $version, payload built for $manifest->{targetVersion}";
+        warn_ "version mismatch: installed $version, payload built for $targets_text";
         note 'continuing because --force was given; the SHA-256 checks below still apply';
     } else {
-        fail "version mismatch: installed $version, payload built for $manifest->{targetVersion}. Pass --force to try anyway.";
+        fail "version mismatch: installed $version, payload built for $targets_text. Pass --force to try anyway.";
     }
 }
 

@@ -295,5 +295,6 @@ knowing about on its own: it held the old global lock forever, and its
 existence is part of why serial checking looked worse than it was.
 
 Verified against the source tree with the full `mailnews/local` and
-`mailnews/base` xpcshell suites — 137 passing, including the test shipped in
-`test/` here.
+`mailnews/base` xpcshell suites, including the test shipped in `test/` here.
+Last re-run on comm-central `157.0a1` at `e9464d8982e` — 138 passing, none
+failing.

@@ -3,7 +3,8 @@
     "description":  "Unconditional per-destination POP3 download lock (bug 1943854)",
     "targetVersions":  [
                            "154.0",
-                           "155.0"
+                           "155.0",
+                           "155.0.1"
                        ],
     "sourceTree":  "comm-central 156.0a1 @ 48d14750199",
     "entries":  [

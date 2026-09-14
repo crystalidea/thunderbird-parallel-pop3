@@ -290,19 +290,20 @@ sub read_app_ini {
 # Writing omni.ja while the application has it mapped corrupts the install, so
 # refuse when we can see a running process and say so when we cannot tell.
 sub check_not_running {
-    my $out;
+    my ($out, $running);
     if ($^O eq 'MSWin32') {
         $out = `tasklist /FI "IMAGENAME eq thunderbird.exe" /NH 2>NUL`;
-        if (defined $out && $out =~ /thunderbird\.exe/i) {
-            fail 'Thunderbird is running. Close it first.';
-        }
+        $running = defined $out && $out =~ /thunderbird\.exe/i;
     } else {
         $out = `ps -A -o comm= 2>/dev/null`;
-        if (defined $out && $out =~ /(^|\/)thunderbird(-bin)?$/mi) {
-            fail 'Thunderbird is running. Close it first.';
-        }
+        $running = defined $out && $out =~ /(^|\/)thunderbird(-bin)?$/mi;
     }
-    if (defined $out && $out ne '') {
+
+    if ($running) {
+        # A dry run only reads, so it is fine to inspect a live installation.
+        fail 'Thunderbird is running. Close it first.' unless $DRY;
+        warn_ 'Thunderbird is running - fine for --dry-run, but close it before patching';
+    } elsif (defined $out && $out ne '') {
         ok 'Thunderbird is not running';
     } else {
         warn_ 'could not determine whether Thunderbird is running - make sure it is closed';

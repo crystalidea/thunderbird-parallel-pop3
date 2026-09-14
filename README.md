@@ -4,7 +4,7 @@ Makes Thunderbird check POP3 accounts concurrently instead of one after
 another. Accounts that download into the same folder — a global inbox, or
 several accounts deferred to the same account — still run one at a time.
 
-Built for **Thunderbird 154.0 and 155.0**.
+Built for **Thunderbird 154.0, 155.0 and 155.0.1**.
 
 ## Why
 
@@ -90,7 +90,9 @@ perl patch-parallel-pop3.pl \
 Requires `Archive::Zip`. Everything else is core Perl. The script prints the
 right install command for your platform if it is missing.
 
-Thunderbird must be closed; the script checks and refuses otherwise.
+Thunderbird must be closed to patch; the script checks and refuses otherwise.
+`--dry-run` only reads, so it works fine against a running installation and
+just warns.
 
 ### The profile argument is not optional in practice
 
@@ -282,15 +284,14 @@ checkout would break the SHA-256 verification.
 ## Provenance
 
 Built from comm-central `156.0a1` at `48d14750199`, targeting Thunderbird
-`154.0` (build `20260818021538`) and `155.0` (build `20260828141248`). All
-three patched modules are byte-identical across those two releases, so one
-payload serves both. Earlier revisions targeted 153.0.3; that payload is in the
-git history.
+`154.0`, `155.0` and `155.0.1`. All three patched modules are byte-identical
+across those releases, so one payload serves them all. Earlier revisions
+targeted 153.0.3; that payload is in the git history.
 
-`Pop3Client.sys.mjs` is byte-for-byte the same in the tree and in both
-releases, including the watchdog timer from [bug 2020627][b2020627] that fixed
-POP3 deadlocking on silent servers. The lock depends on that file's `onFree`
-hook, so it is worth re-checking on every retarget. That bug is also worth
+`Pop3Client.sys.mjs` is byte-for-byte the same across those releases too. It is
+not patched, but the lock depends on its `onFree` hook and on the watchdog
+timer from [bug 2020627][b2020627] that fixed POP3 deadlocking on silent
+servers, so it is worth re-checking on every retarget. That bug is also worth
 knowing about on its own: it held the old global lock forever, and its
 existence is part of why serial checking looked worse than it was.
 

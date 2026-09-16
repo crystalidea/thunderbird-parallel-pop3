@@ -4,7 +4,8 @@
     "targetVersions":  [
                            "154.0",
                            "155.0",
-                           "155.0.1"
+                           "155.0.1",
+                           "156.0"
                        ],
     "sourceTree":  "comm-central 156.0a1 @ 48d14750199",
     "entries":  [

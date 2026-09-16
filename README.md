@@ -4,7 +4,7 @@ Makes Thunderbird check POP3 accounts concurrently instead of one after
 another. Accounts that download into the same folder — a global inbox, or
 several accounts deferred to the same account — still run one at a time.
 
-Built for **Thunderbird 154.0, 155.0 and 155.0.1**.
+Built for **Thunderbird 154.0 through 156.0**.
 
 ## Why
 
@@ -284,16 +284,21 @@ checkout would break the SHA-256 verification.
 ## Provenance
 
 Built from comm-central `156.0a1` at `48d14750199`, targeting Thunderbird
-`154.0`, `155.0` and `155.0.1`. All three patched modules are byte-identical
-across those releases, so one payload serves them all. Earlier revisions
-targeted 153.0.3; that payload is in the git history.
+`154.0`, `155.0`, `155.0.1` and `156.0`. All three patched modules are
+byte-identical across every one of those releases, so a single payload serves
+them all. Earlier revisions targeted 153.0.3; that payload is in the git
+history.
 
-`Pop3Client.sys.mjs` is byte-for-byte the same across those releases too. It is
-not patched, but the lock depends on its `onFree` hook and on the watchdog
-timer from [bug 2020627][b2020627] that fixed POP3 deadlocking on silent
-servers, so it is worth re-checking on every retarget. That bug is also worth
-knowing about on its own: it held the old global lock forever, and its
-existence is part of why serial checking looked worse than it was.
+`Pop3Client.sys.mjs` is not patched, but the lock hangs off its `onFree` hook
+and relies on the watchdog timer from [bug 2020627][b2020627] that fixed POP3
+deadlocking on silent servers, so check it on every retarget. It did change in
+156.0 — [bug 2056491][b2056491] moved the AUTH LOGIN encoding into
+`MailAuthenticator` — but that touches authentication only and leaves the
+client lifecycle alone. Bug 2020627 is worth knowing about on its own: it held
+the old global lock forever, and its existence is part of why serial checking
+looked worse than it was.
+
+[b2056491]: https://bugzilla.mozilla.org/show_bug.cgi?id=2056491
 
 Verified against the source tree with the full `mailnews/local` and
 `mailnews/base` xpcshell suites, including the test shipped in `test/` here.

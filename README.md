@@ -4,7 +4,7 @@ Makes Thunderbird check POP3 accounts concurrently instead of one after
 another. Accounts that download into the same folder — a global inbox, or
 several accounts deferred to the same account — still run one at a time.
 
-Built for **Thunderbird 154.0 through 157.0**.
+Built for **Thunderbird 154.0 through 157.0.1**.
 
 ## Why
 
@@ -284,7 +284,7 @@ checkout would break the SHA-256 verification.
 ## Provenance
 
 Built from comm-central `156.0a1` at `48d14750199`, targeting Thunderbird
-`154.0` through `157.0`, every release in between included. All three patched
+`154.0` through `157.0.1`, every release in between included. All three patched
 modules are byte-identical across every one of those releases, so a single
 payload serves them all — the major bump to 157.0 did not touch them either.
 Earlier revisions targeted 153.0.3; that payload is in the git history.

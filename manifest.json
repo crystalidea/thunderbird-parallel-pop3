@@ -2,27 +2,21 @@
     "name":  "parallel-pop3",
     "description":  "Unconditional per-destination POP3 download lock (bug 1943854)",
     "targetVersions":  [
-                           "154.0",
-                           "155.0",
-                           "155.0.1",
-                           "156.0",
-                           "156.0.1",
-                           "157.0",
-                           "157.0.1"
+                           "158.0"
                        ],
-    "sourceTree":  "comm-central 156.0a1 @ 48d14750199",
+    "sourceTree":  "comm-central, rebased onto the 158.0 release files",
     "entries":  [
                     {
                         "entry":  "modules/Pop3IncomingServer.sys.mjs",
                         "file":  "Pop3IncomingServer.sys.mjs",
-                        "origSha":  "258D69C50CF5BBE74689FADCD0D7362761F09227E077052D38F5C1A199A7A2F1",
-                        "newSha":  "E1AD2B512FD4DBE4FB5016EE5973D5EF8E66AD0D75E24F3BF5EC7B270CE936DA"
+                        "origSha":  "0AA19A47D92734BE49EB8F039A41BD00448D959AED1E46DD5BBDCCE522667075",
+                        "newSha":  "5321270A3D8251BBBD0992544D73068DE488AA3745F5A02952A5BA4E7341B1D7"
                     },
                     {
                         "entry":  "modules/Pop3Service.sys.mjs",
                         "file":  "Pop3Service.sys.mjs",
-                        "origSha":  "739F755C2B4D2F4D36ECC83A608A47DF576C3DC52BBFC4A48D923AAA99A06BEC",
-                        "newSha":  "BBC6FD3B749EE0D648091F00A79BC39F536765675D685A78858856CEFEDA3AD6"
+                        "origSha":  "9CEF62A32630FCA14B8644B0B013EBF8D26C5AEBE5B9C67173CF0EE4944E6DB2",
+                        "newSha":  "28A77C72A4B36BAFAABC326A2FFDD6F557BD7BB6E623213BD909B292E408A806"
                     },
                     {
                         "entry":  "modules/Pop3Channel.sys.mjs",

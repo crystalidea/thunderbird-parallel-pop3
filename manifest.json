@@ -2,7 +2,8 @@
     "name":  "parallel-pop3",
     "description":  "Unconditional per-destination POP3 download lock (bug 1943854)",
     "targetVersions":  [
-                           "158.0"
+                           "158.0",
+                           "158.0.1"
                        ],
     "sourceTree":  "comm-central, rebased onto the 158.0 release files",
     "entries":  [

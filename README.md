@@ -4,7 +4,7 @@ Makes Thunderbird check POP3 accounts concurrently instead of one after
 another. Accounts that download into the same folder — a global inbox, or
 several accounts deferred to the same account — still run one at a time.
 
-Built for **Thunderbird 158.0 and 158.0.1**.
+Built for **Thunderbird 159.0**.
 
 ## Why
 
@@ -283,20 +283,21 @@ checkout would break the SHA-256 verification.
 
 ## Provenance
 
-Targets Thunderbird `158.0` and `158.0.1`, rebuilt against 158.0's own files.
+Targets Thunderbird `159.0`, rebuilt against that release's own files.
 
 The patch itself was written against comm-central `156.0a1` at `48d14750199`
 and carried unchanged from 154.0 to 157.0.1 — seven releases that never touched
-the three modules. 158.0 broke that run, so the payload here is a genuine
-rebuild rather than another entry in a list. Two upstream changes landed in
-files this patch edits, both in functions it leaves alone:
+the three modules. Since then upstream has edited them in every release, so the
+payload is rebuilt each time rather than gaining another entry in a list. Every
+change so far has landed in a function this patch leaves alone, so it
+re-applies with nothing but line offsets:
 
-- `Pop3Service._getMail` gained an offline guard at the top; this patch changes
-  the closing call at the bottom.
-- `Pop3IncomingServer.performBiff` gained a `try`/`catch` that resets
-  `performingBiff`; this patch touches the locking helpers further down.
+- 158.0: `Pop3Service._getMail` gained an offline guard at the top, and
+  `Pop3IncomingServer.performBiff` a `try`/`catch` resetting `performingBiff`.
+- 159.0: `Pop3Channel.asyncOpen` gained an `nsIContentSecurityManager` check at
+  the top. This patch changes the call at the bottom of that same method.
 
-Older releases are served by the commit tagged before this rebuild; the 153.0.3
+Older releases are served by tags: `tb-154-to-157` and `tb-158`. The 153.0.3
 payload is further back in the git history.
 
 `Pop3Client.sys.mjs` is not patched, but the lock hangs off its `onFree` hook
@@ -304,11 +305,14 @@ and relies on the watchdog timer from [bug 2020627][b2020627] that fixed POP3
 deadlocking on silent servers, so check it on every retarget. It did change in
 156.0 — [bug 2056491][b2056491] moved the AUTH LOGIN encoding into
 `MailAuthenticator` — but that touches authentication only and leaves the
-client lifecycle alone. It changed again in 158.0, this time in how error
-alerts are suppressed for background operations, which is equally unrelated.
-Bug 2020627 is worth knowing about on its own: it held the old global lock
-forever, and its existence is part of why serial checking looked worse than it
-was.
+client lifecycle alone. It changed again in 158.0 (how error alerts are
+suppressed for background operations) and substantially in 159.0, where
+authentication was reworked to fetch the password up front. That last one adds
+an early exit when the password prompt is cancelled, and it goes through
+`_actionDone`, so the lock is still released — worth re-checking precisely
+because the refactor was large. Bug 2020627 is worth knowing about on its own:
+it held the old global lock forever, and its existence is part of why serial
+checking looked worse than it was.
 
 [b2056491]: https://bugzilla.mozilla.org/show_bug.cgi?id=2056491
 

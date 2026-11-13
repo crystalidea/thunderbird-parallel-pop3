@@ -23,6 +23,10 @@
 #   --force         Continue when the installed version differs from the one
 #                   the payload was built for. The per-entry SHA-256 checks
 #                   still apply and cannot be bypassed.
+#   --prune-backups After patching, delete omni.ja backups left by earlier
+#                   Thunderbird versions. The backup for the installed version
+#                   is always kept, so --restore keeps working. Ignored with
+#                   --restore.
 #   --help          This text.
 
 use strict;
@@ -42,7 +46,7 @@ my %opt = (payload => dirname(File::Spec->rel2abs($0)));
 GetOptions(
     \%opt,
     'install=s', 'profile=s', 'payload=s',
-    'restore', 'dry-run', 'force', 'help',
+    'restore', 'dry-run', 'force', 'prune-backups', 'help',
 ) or usage(1);
 
 usage(0) if $opt{help};
@@ -191,6 +195,7 @@ for my $e (@{ $manifest->{entries} }) {
 }
 
 unless (@to_patch) {
+    prune_backups() if $opt{'prune-backups'};
     print "\nAll $already modules are already patched. Nothing to do.\n\n";
     exit 0;
 }
@@ -244,6 +249,8 @@ ok 'every module matches the expected hash';
 
 step 'Startup cache';
 purge_startup_cache();
+
+prune_backups() if $opt{'prune-backups'};
 
 if ($^O eq 'darwin') {
     step 'macOS code signature';
@@ -308,6 +315,45 @@ sub check_not_running {
     } else {
         warn_ 'could not determine whether Thunderbird is running - make sure it is closed';
     }
+}
+
+# Remove omni.ja backups left by earlier Thunderbird versions. The backup for
+# the version installed right now is always kept, so --restore keeps working.
+sub prune_backups {
+    step 'Old backups';
+    my $keep = basename($backup);
+
+    my $dh;
+    unless (opendir $dh, $resources) {
+        warn_ "cannot read '$resources' to look for backups: $!";
+        return;
+    }
+    my @stale = sort grep { /^omni\.ja\.bak-/ && $_ ne $keep } readdir $dh;
+    closedir $dh;
+
+    unless (@stale) {
+        ok "nothing to remove, only $keep is present";
+        return;
+    }
+
+    my $freed = 0;
+    for my $name (@stale) {
+        my $path = File::Spec->catfile($resources, $name);
+        my $size = -s $path || 0;
+        if ($DRY) {
+            ok sprintf('would delete %s (%.0f MB)', $name, $size / 1048576);
+            $freed += $size;
+        } elsif (unlink $path) {
+            ok sprintf('deleted %s (%.0f MB)', $name, $size / 1048576);
+            $freed += $size;
+        } else {
+            warn_ "could not delete '$name': $!";
+        }
+    }
+    note sprintf(
+        '%s %.0f MB, keeping %s',
+        $DRY ? 'would free' : 'freed', $freed / 1048576, $keep
+    );
 }
 
 sub purge_startup_cache {

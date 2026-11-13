@@ -85,7 +85,15 @@ perl patch-parallel-pop3.pl \
 | `--dry-run` | Verify and report, write nothing |
 | `--restore` | Put the backed up `omni.ja` back |
 | `--force` | Allow a version mismatch. Does **not** relax the SHA-256 checks |
+| `--prune-backups` | After patching, delete backups from older Thunderbird versions |
 | `--help` | Usage |
+
+Each patch run leaves an `omni.ja.bak-<version>-<buildid>` of about 95 MB
+behind, and the script never overwrites one — so after a few updates they add
+up. `--prune-backups` clears the stale ones at the end of a successful run,
+always keeping the backup matching the installed version so `--restore` still
+works. It runs after the new backup is taken, never on `--restore`, and under
+`--dry-run` it only reports. `patch-parallel-pop3.bat` passes it by default.
 
 Requires `Archive::Zip`. Everything else is core Perl. The script prints the
 right install command for your platform if it is missing.

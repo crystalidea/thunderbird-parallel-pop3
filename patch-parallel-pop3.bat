@@ -23,10 +23,12 @@ echo   Profile      : %PROFILE%
 echo.
 echo   About to:
 echo     1. back up omni.ja next to the original
-echo     2. replace 4 JavaScript modules inside omni.ja
+echo     2. replace 3 JavaScript modules inside omni.ja
 echo     3. delete the profile's startupCache
+echo     4. delete omni.ja backups left by older Thunderbird versions,
+echo        keeping the one just made so --restore still works
 echo.
-echo   Nothing is written unless all 4 modules match the exact
+echo   Nothing is written unless all 3 modules match the exact
 echo   bytes this patch was built from. Thunderbird must be closed.
 echo.
 echo   To undo later:
@@ -49,7 +51,7 @@ if errorlevel 1 (
     goto :end
 )
 
-perl "%~dp0patch-parallel-pop3.pl" --install "%INSTALL%" --profile "%PROFILE%"
+perl "%~dp0patch-parallel-pop3.pl" --install "%INSTALL%" --profile "%PROFILE%" --prune-backups
 
 :end
 echo.

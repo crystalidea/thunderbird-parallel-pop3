@@ -4,7 +4,7 @@ Makes Thunderbird check POP3 accounts concurrently instead of one after
 another. Accounts that download into the same folder — a global inbox, or
 several accounts deferred to the same account — still run one at a time.
 
-Built for **Thunderbird 159.0**.
+Built for **Thunderbird 159.0 and 160.0**.
 
 ## Why
 
@@ -283,7 +283,7 @@ checkout would break the SHA-256 verification.
 
 ## Provenance
 
-Targets Thunderbird `159.0`, rebuilt against that release's own files.
+Targets Thunderbird `159.0` and `160.0`, rebuilt against 159.0's own files.
 
 The patch itself was written against comm-central `156.0a1` at `48d14750199`
 and carried unchanged from 154.0 to 157.0.1 — seven releases that never touched
@@ -310,9 +310,19 @@ suppressed for background operations) and substantially in 159.0, where
 authentication was reworked to fetch the password up front. That last one adds
 an early exit when the password prompt is cancelled, and it goes through
 `_actionDone`, so the lock is still released — worth re-checking precisely
-because the refactor was large. Bug 2020627 is worth knowing about on its own:
-it held the old global lock forever, and its existence is part of why serial
-checking looked worse than it was.
+because the refactor was large.
+
+160.0 added another early return to `_onData`, discarding data that arrived
+before a STARTTLS upgrade. That one is placed *above* the
+`_clearCommandTimeout()` call, so the watchdog stays armed and a session cut
+short this way still ends in `_actionDone` rather than holding its lock. Had
+the return been a few lines lower, it would have cancelled the watchdog and
+stranded the folder until restart — which is exactly why this file is worth
+reading on every release even though it is never patched.
+
+Bug 2020627 is worth knowing about on its own: it held the old global lock
+forever, and its existence is part of why serial checking looked worse than it
+was.
 
 [b2056491]: https://bugzilla.mozilla.org/show_bug.cgi?id=2056491
 
